@@ -1,0 +1,26 @@
+{
+  "name": "lynnfly/hyperf-dto",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Lynnfly\\HyperfDto\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "LynnFly",
+      "email": "fly@eyabc.cn"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "hyperf/config": "~3.0.0",
+    "hyperf/di": "~3.0.0",
+    "hyperf/http-server": "~3.0.0"
+  },
+  "extra": {
+    "hyperf": {
+      "config": "Lynnfly\\HyperfDto\\ConfigProvider"
+    }
+  }
+}
