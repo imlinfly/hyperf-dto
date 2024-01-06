@@ -54,7 +54,7 @@ abstract class AbstractDataTransferObject
      * @param array $data
      * @return static
      */
-    public static function make(array $data): static
+    public static function make(array $data = []): static
     {
         /** @var ContainerInterface $container */
         $container = ApplicationContext::getContainer();
@@ -70,6 +70,10 @@ abstract class AbstractDataTransferObject
      */
     protected function setProperty(array $data): static
     {
+        if (empty($data)) {
+            return $this;
+        }
+
         foreach ($this->getProperties() as $property) {
             /** @var null|ReflectionType|ReflectionNamedType $type */
             [$propertyName, $type] = $property;
