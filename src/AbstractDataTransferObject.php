@@ -58,17 +58,18 @@ abstract class AbstractDataTransferObject
     {
         /** @var ContainerInterface $container */
         $container = ApplicationContext::getContainer();
+        /** @var static $object */
         $object = clone $container->make(static::class);
-        $object->setProperty($data);
+        $object->fill($data);
         return $object;
     }
 
     /**
-     * 将数组转换为对象
+     * 填充属性
      * @param array $data
      * @return static
      */
-    protected function setProperty(array $data): static
+    protected function fill(array $data): static
     {
         if (empty($data)) {
             return $this;
@@ -85,18 +86,13 @@ abstract class AbstractDataTransferObject
 
             $paramName = $this->_toUnderScore ? $this->toUnderScore($propertyName) : $propertyName;
 
-            // if ($this->_toUnderScore && isset($data[$paramName])) {
-            //     $value = $data[$paramName];
-            // } elseif (isset($data[$propertyName])) {
-            //     $value = $data[$propertyName];
-            // } else {
-            //     continue;
-            // }
-
-            if (!isset($data[$paramName])) {
+            if ($this->_toUnderScore && isset($data[$paramName])) {
+                $value = $data[$paramName];
+            } elseif (isset($data[$propertyName])) {
+                $value = $data[$propertyName];
+            } else {
                 continue;
             }
-            $value = $data[$paramName];
 
             // 子类转换
             if ($type && !$type->isBuiltin()) {
