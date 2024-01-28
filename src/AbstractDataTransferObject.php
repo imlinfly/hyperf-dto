@@ -114,9 +114,10 @@ abstract class AbstractDataTransferObject
     /**
      * 将对象转换为数组
      * @param bool|null $toUnderScore 是否将驼峰转下划线
+     * @param array|null $only 指定返回的属性
      * @return array
      */
-    public function toArray(bool $toUnderScore = null): array
+    public function toArray(bool $toUnderScore = null, array $only = null): array
     {
         $data = [];
         $toUnderScore ??= $this->_toUnderScoreOnSerialize;
@@ -138,19 +139,24 @@ abstract class AbstractDataTransferObject
             $data[$name] = $value instanceof self ? $value->toArray() : $value;
         }
 
+        if (null !== $only) {
+            return array_intersect_key($data, array_flip($only));
+        }
+
         return $data;
     }
 
     /**
      * 转换为json
      * @param bool|null $toUnderScore 是否将驼峰转下划线
+     * @param array|null $only 指定返回的属性
      * @param int $options json_encode options
      * @param int $depth json_encode depth
      * @return string
      */
-    public function toJson(bool $toUnderScore = null, int $options = 0, int $depth = 512): string
+    public function toJson(bool $toUnderScore = null, array $only = null, int $options = 0, int $depth = 512): string
     {
-        return json_encode($this->toArray($toUnderScore), $options, $depth);
+        return json_encode($this->toArray($toUnderScore, $only), $options, $depth);
     }
 
     /**
