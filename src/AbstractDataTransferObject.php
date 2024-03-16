@@ -174,11 +174,11 @@ abstract class AbstractDataTransferObject
      * @param array $data
      * @return static
      */
-    protected function createChild(string $class, array $data): static
+    protected function createChild(string $class, array $data): self
     {
         // 判断对象是否是当前类的子类
-        if (!is_subclass_of($class, static::class)) {
-            throw new InvalidArgumentException("{$class} is not subclass of " . static::class);
+        if (!is_subclass_of($class, self::class)) {
+            throw new InvalidArgumentException("{$class} is not subclass of " . self::class);
         }
 
         return $class::make($data);
