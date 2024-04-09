@@ -96,7 +96,7 @@ abstract class AbstractDataTransferObject
 
             // 子类转换
             if ($type && !$type->isBuiltin()) {
-                $this->{$propertyName} = $this->createChild($type->getName(), $value);
+                $this->{$propertyName} = $this->buildObjectValue($type->getName(), $value);
                 continue;
             }
 
@@ -169,18 +169,23 @@ abstract class AbstractDataTransferObject
     }
 
     /**
-     * 创建子类对象
+     * 构建对象值
      * @param string $class
-     * @param array $data
-     * @return static
+     * @param mixed $data
+     * @return mixed
      */
-    protected function createChild(string $class, array $data): self
+    protected function buildObjectValue(string $class, mixed $data): mixed
     {
+        if (!is_array($data)) {
+            return $data;
+        }
+
         // 判断对象是否是当前类的子类
-        if (!is_subclass_of($class, self::class)) {
+        if (is_subclass_of($class, self::class)) {
             throw new InvalidArgumentException("{$class} is not subclass of " . self::class);
         }
 
+        /** @var self $class */
         return $class::make($data);
     }
 
