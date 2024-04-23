@@ -136,7 +136,7 @@ abstract class AbstractDataTransferObject
                 $name = $this->toUnderScore($name);
             }
 
-            $data[$name] = $value instanceof self ? $value->toArray() : $value;
+            $data[$name] = $value instanceof self ? $value->toArray($toUnderScore) : $value;
         }
 
         if (null !== $only) {
@@ -181,7 +181,7 @@ abstract class AbstractDataTransferObject
         }
 
         // 判断对象是否是当前类的子类
-        if (is_subclass_of($class, self::class)) {
+        if (!is_subclass_of($class, self::class)) {
             throw new InvalidArgumentException("{$class} is not subclass of " . self::class);
         }
 
