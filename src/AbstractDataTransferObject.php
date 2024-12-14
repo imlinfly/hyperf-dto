@@ -206,18 +206,19 @@ abstract class AbstractDataTransferObject
      */
     protected function getProperties(): array
     {
-        $store = &self::$_properties[static::class];
-        if (isset($store)) {
-            return $store;
+        $cache = &self::$_properties[static::class];
+        if (isset($cache)) {
+            return $cache;
         }
 
+        $store = [];
         $ref = new ReflectionClass($this);
         $properties = $ref->getProperties(ReflectionProperty::IS_PUBLIC);
         foreach ($properties as $property) {
             $store[] = [$property->getName(), $property->getType()];
         }
 
-        return $store;
+        return $cache = $store;
     }
 
     /**
