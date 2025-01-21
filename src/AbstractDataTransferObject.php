@@ -59,7 +59,7 @@ abstract class AbstractDataTransferObject
         /** @var ContainerInterface $container */
         $container = ApplicationContext::getContainer();
         /** @var static $object */
-        $object = clone $container->make(static::class);
+        $object = $container->make(static::class);
         $object->fill($data);
         return $object;
     }
@@ -86,9 +86,9 @@ abstract class AbstractDataTransferObject
 
             $paramName = $this->_toUnderScore ? $this->toUnderScore($propertyName) : $propertyName;
 
-            if ($this->_toUnderScore && isset($data[$paramName])) {
+            if ($this->_toUnderScore && array_key_exists($paramName, $data)) {
                 $value = $data[$paramName];
-            } elseif (isset($data[$propertyName])) {
+            } elseif (array_key_exists($propertyName, $data)) {
                 $value = $data[$propertyName];
             } else {
                 continue;
@@ -102,7 +102,7 @@ abstract class AbstractDataTransferObject
 
             // 强类型
             if ($type instanceof ReflectionNamedType) {
-                $value = static::cast($value, $type->getName());
+                $value = static::cast($value, $type);
             }
 
             $this->{$propertyName} = $value;
@@ -122,11 +122,13 @@ abstract class AbstractDataTransferObject
         $data = [];
         $toUnderScore ??= $this->_toUnderScoreOnSerialize;
 
+        $dtoData = (array)$this;
+
         // 获取初始化的属性
         foreach ($this->getProperties() as $property) {
             [$name] = $property;
 
-            if (!isset($this->{$name})) {
+            if (!array_key_exists($name, $dtoData)) {
                 continue;
             }
 
@@ -224,12 +226,16 @@ abstract class AbstractDataTransferObject
     /**
      * 强类型转换
      * @param mixed $value
-     * @param string $type
+     * @param ReflectionNamedType $type
      * @return mixed
      */
-    protected static function cast(mixed $value, string $type): mixed
+    protected static function cast(mixed $value, ReflectionNamedType $type): mixed
     {
-        return match ($type) {
+        if ($type->allowsNull() && $value === null) {
+            return null;
+        }
+
+        return match ($type->getName()) {
             'int' => (int)$value,
             'float' => (float)$value,
             'bool' => (bool)$value,
