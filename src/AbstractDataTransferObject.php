@@ -102,6 +102,14 @@ abstract class AbstractDataTransferObject
 
             // 强类型
             if ($type instanceof ReflectionNamedType) {
+                // 判断是否为空值，如果是空值且类型不包含null，则跳过
+                if ($type->getName() !== 'string' && ($value === null || $value === '')) {
+                    if ($type->allowsNull()) {
+                        $value = null;
+                    } else {
+                        continue;
+                    }
+                }
                 $value = static::cast($value, $type);
             }
 
