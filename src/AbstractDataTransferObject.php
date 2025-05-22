@@ -13,12 +13,13 @@ namespace Lynnfly\HyperfDto;
 use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ContainerInterface;
 use InvalidArgumentException;
+use JsonSerializable;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
 
-abstract class AbstractDataTransferObject
+abstract class AbstractDataTransferObject implements JsonSerializable
 {
     /**
      * 属性列表
@@ -48,6 +49,12 @@ abstract class AbstractDataTransferObject
      * @var array
      */
     protected array $_ignore = [];
+
+    /**
+     * 保留为null的属性
+     * @var bool
+     */
+    protected bool $_keepNull = true;
 
     /**
      * 构建Dto对象
@@ -123,12 +130,14 @@ abstract class AbstractDataTransferObject
      * 将对象转换为数组
      * @param bool|null $toUnderScore 是否将驼峰转下划线
      * @param array|null $only 指定返回的属性
+     * @param bool|null $keepNull 是否保留空值
      * @return array
      */
-    public function toArray(bool $toUnderScore = null, array $only = null): array
+    public function toArray(bool $toUnderScore = null, array $only = null, ?bool $keepNull = null): array
     {
         $data = [];
         $toUnderScore ??= $this->_toUnderScoreOnSerialize;
+        $keepNull ??= $this->_keepNull;
 
         $dtoData = (array)$this;
 
@@ -141,6 +150,10 @@ abstract class AbstractDataTransferObject
             }
 
             $value = $this->{$name};
+
+            if (!$keepNull && is_null($value)) {
+                continue;
+            }
 
             if ($toUnderScore) {
                 $name = $this->toUnderScore($name);
@@ -176,6 +189,15 @@ abstract class AbstractDataTransferObject
     public function __toString(): string
     {
         return $this->toJson();
+    }
+
+    /**
+     * Json序列化
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     /**
