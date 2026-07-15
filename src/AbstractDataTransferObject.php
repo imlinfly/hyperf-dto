@@ -56,6 +56,13 @@ abstract class AbstractDataTransferObject implements JsonSerializable
      */
     protected bool $_keepNull = true;
 
+    public function __construct(array $data)
+    {
+        if (!empty($data)) {
+            $this->fill($data);
+        }
+    }
+
     /**
      * 构建Dto对象
      * @param array $data
@@ -65,10 +72,8 @@ abstract class AbstractDataTransferObject implements JsonSerializable
     {
         /** @var ContainerInterface $container */
         $container = ApplicationContext::getContainer();
-        /** @var static $object */
-        $object = $container->make(static::class);
-        $object->fill($data);
-        return $object;
+
+        return $container->make(static::class, ['data' => $data]);
     }
 
     /**
@@ -133,7 +138,7 @@ abstract class AbstractDataTransferObject implements JsonSerializable
      * @param bool|null $keepNull 是否保留空值
      * @return array
      */
-    public function toArray(bool $toUnderScore = null, array $only = null, ?bool $keepNull = null): array
+    public function toArray(?bool $toUnderScore = null, ?array $only = null, ?bool $keepNull = null): array
     {
         $data = [];
         $toUnderScore ??= $this->_toUnderScoreOnSerialize;
@@ -177,7 +182,7 @@ abstract class AbstractDataTransferObject implements JsonSerializable
      * @param int $depth json_encode depth
      * @return string
      */
-    public function toJson(bool $toUnderScore = null, array $only = null, int $options = 0, int $depth = 512): string
+    public function toJson(?bool $toUnderScore = null, ?array $only = null, int $options = 0, int $depth = 512): string
     {
         return json_encode($this->toArray($toUnderScore, $only), $options, $depth);
     }
@@ -214,7 +219,7 @@ abstract class AbstractDataTransferObject implements JsonSerializable
 
         // 判断对象是否是当前类的子类
         if (!is_subclass_of($class, self::class)) {
-            throw new InvalidArgumentException("{$class} is not subclass of " . self::class);
+            throw new InvalidArgumentException("$class is not subclass of " . self::class);
         }
 
         /** @var self $class */
