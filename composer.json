@@ -6,6 +6,11 @@
       "Lynnfly\\HyperfDto\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Lynnfly\\HyperfDto\\Tests\\": "tests/"
+    }
+  },
   "authors": [
     {
       "name": "LynnFly",
@@ -17,6 +22,12 @@
     "hyperf/config": "~3.2.0",
     "hyperf/di": "~3.2.0",
     "hyperf/http-server": "~3.2.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  },
+  "scripts": {
+    "test": "phpunit"
   },
   "extra": {
     "hyperf": {

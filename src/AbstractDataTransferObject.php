@@ -14,6 +14,7 @@ use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ContainerInterface;
 use InvalidArgumentException;
 use JsonSerializable;
+use Lynnfly\HyperfDto\Attribute\CollectionOf;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -32,6 +33,12 @@ abstract class AbstractDataTransferObject implements JsonSerializable
      * @var array
      */
     private static array $_underScoreCache = [];
+
+    /**
+     * 集合元素类型元数据缓存。
+     * @var array<class-string, array<string, CollectionOf|null>>
+     */
+    private static array $_collectionOfCache = [];
 
     /**
      * 实例化时是否将属性名转为下划线
@@ -106,6 +113,21 @@ abstract class AbstractDataTransferObject implements JsonSerializable
                 continue;
             }
 
+            $collectionOf = $this->getCollectionOf($propertyName);
+            if ($collectionOf !== null) {
+                if ($value === null && $type instanceof ReflectionNamedType && $type->allowsNull()) {
+                    $this->{$propertyName} = null;
+                    continue;
+                }
+
+                if (! is_array($value)) {
+                    throw new InvalidArgumentException("Property '{$propertyName}' must be an array");
+                }
+
+                $this->{$propertyName} = $this->buildCollectionValue($propertyName, $collectionOf->class, $value);
+                continue;
+            }
+
             // 子类转换
             if ($type && !$type->isBuiltin()) {
                 $this->{$propertyName} = $this->buildObjectValue($type->getName(), $value);
@@ -164,7 +186,7 @@ abstract class AbstractDataTransferObject implements JsonSerializable
                 $name = $this->toUnderScore($name);
             }
 
-            $data[$name] = $value instanceof self ? $value->toArray($toUnderScore) : $value;
+            $data[$name] = $this->serializeValue($value, $toUnderScore);
         }
 
         if (null !== $only) {
@@ -224,6 +246,74 @@ abstract class AbstractDataTransferObject implements JsonSerializable
 
         /** @var self $class */
         return $class::make($data);
+    }
+
+    /**
+     * 将集合属性的原始元素转换为目标 DTO，同时保留原始键。
+     *
+     * @param array<array-key, mixed> $data
+     * @return array<array-key, self>
+     */
+    protected function buildCollectionValue(string $property, string $class, array $data): array
+    {
+        $result = [];
+
+        foreach ($data as $key => $value) {
+            if ($value instanceof $class) {
+                $result[$key] = $value;
+                continue;
+            }
+
+            if (is_array($value)) {
+                $result[$key] = $class::make($value);
+                continue;
+            }
+
+            $type = get_debug_type($value);
+            throw new InvalidArgumentException(
+                "Property '{$property}' item '{$key}' must be {$class} or array, {$type} given",
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * 递归序列化 DTO 数组，保留数组键并沿用 DTO 的字段转换规则。
+     */
+    protected function serializeValue(mixed $value, ?bool $toUnderScore): mixed
+    {
+        if ($value instanceof self) {
+            return $value->toArray($toUnderScore);
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        $result = [];
+        foreach ($value as $key => $item) {
+            $result[$key] = $this->serializeValue($item, $toUnderScore);
+        }
+
+        return $result;
+    }
+
+    /**
+     * 读取当前 DTO 属性上的集合元素类型声明。
+     */
+    private function getCollectionOf(string $property): ?CollectionOf
+    {
+        $class = static::class;
+        if (array_key_exists($property, self::$_collectionOfCache[$class] ?? [])) {
+            return self::$_collectionOfCache[$class][$property];
+        }
+
+        $reflectionProperty = (new ReflectionClass($this))->getProperty($property);
+        $attributes = $reflectionProperty->getAttributes(CollectionOf::class);
+        return self::$_collectionOfCache[$class][$property] = $attributes === []
+            ? null
+            : $attributes[0]->newInstance();
     }
 
     /**
